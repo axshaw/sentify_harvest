@@ -7,7 +7,10 @@
     "express": "~3.5.1",
     "twit": "~1.1.12",
     "underscore": "~1.6.0",
-    "logfmt": "~1.1.2"
+    "logfmt": "~1.1.2",
+    "unirest" : "0.2.2",
+    "async" : "0.7.0",
+    "colors" : "0.6.2"
   },
   "devDependencies": {},
   "scripts": {

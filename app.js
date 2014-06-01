@@ -8,6 +8,26 @@ var server = http.createServer(app);
 var Twit = require('twit')
 var _ = require('underscore');
 
+var unirest = require('unirest');
+var async = require('async');
+var colors = require('colors');
+var fs = require('fs');
+var util = require('util');
+// Retrieve
+var MongoClient = require('mongodb').MongoClient;
+var collection;
+
+// Connect to the db
+MongoClient.connect("mongodb://api.sentify.io:27017/sentify", function(err, db) {
+  if(!err) {
+    console.log("mongodb connected");
+    collection = db.collection('tweets');
+  }else{
+    console.log("Mongo connection error" + err);
+  }
+});
+
+
 var T = new Twit({
     consumer_key:         'GNaRtsOwtDBwIJKumIkxDRLA2'
   , consumer_secret:      'OinhKqJxZ0eIOsEZuehfZggPuhFRE7bc8x6eCKfHZVFjO2yjm8'
@@ -15,60 +35,71 @@ var T = new Twit({
   , access_token_secret:  'TVI7UW8tHVpJ1PqZgZrSGpg9oQXRq3vm9N31nGqehk6aq'
 });
 
-var keywords = ['car', 'insurance'];
-
-
-var startDate = new Date();
-startDate.setDate(startDate.getDate() - 7);
-var from = startDate.getFullYear() + '-' + (startDate.getMonth()+1) + '-' +  startDate.getDate();
-
-from = '2014-04-04';
-
-var search = keywords.join(' ') + ' since:' + from;
 var uk = [ '-10.990151', '49.832921', '2.171471', '59.580440'];
+var peterborough = [  '-0.498505', '52.486125','-0.162048', '52.675549'];
+var sentimentLimit = 35000;
+var countFile = "countFile.data";
+var count = 30000; //set count high to prevent hitting service if real data is not found
 
-var arguments = process.argv.slice(2);
+console.log("loading count data");
 
-var showLiveData =  arguments[0] || false;
+var count = fs.readFileSync(countFile);
+console.log("current count: " + count);
 
-if(!showLiveData){
-	console.log("Getting Historic Data.....")
-	T.get('search/tweets', { q: search, count: 250, location : uk }, function(err, reply) {
-
-		var tweets = reply.statuses;
-
-		//Filter by location...only UK
-
-		for(var i = 0 ; i < tweets.length; i++){
-
-			console.log(tweets[i].user.screen_name + " : " + tweets[i].text)
-		}
-	});
+//kill everything if the rate is up near the limit - this will be so much better but for now lets get data!
+if(count > 35000)  {
+  console.log("exiting due to rate limit");
+  process.exit(1);
 }
-else{
-	console.log("Listening for real time data");
-
-	var stream = T.stream('user', { track: 'car', locations: uk })
-
-	stream.on('tweet', function (tweet) {
-	if(tweet.place){
-		if(tweet.place.country === "United Kingdom" || tweet.place.country === "Ireland"){
+console.log("Listening for real time data");
+console.log(peterborough);
 
 
+//stream listener
+var stream = T.stream('statuses/filter', { locations: peterborough, language: 'en' })
+stream.on('tweet', function (tweet) {
 
-			var hasCar = new RegExp("\\b" + "car" + "\\b", "g").test(tweet.text);
-			var hasInsurance = new RegExp("\\b" + "insurance" + "\\b", "g").test(tweet.text);
-
-			if(hasInsurance || hasCar){
-				console.log(tweet.place.country + " : " +  tweet.text)	
-			}
-
-			
-		}
-	}
+      var Request = unirest.post("https://japerk-text-processing.p.mashape.com/sentiment/")
+        .headers({
+          "X-Mashape-Authorization": "djKNHiPRNuUdXAvipKg7KCXjrmlhMAQJ"
+        })
+        .send({
+          "text": tweet.text,
+          "language": "english"
+        })
+        .end(function (response) {
+          dateStamp = Math.round(+new Date()/1000); //seconds since epoch
+          tweet.sentiment = response.body.label;
+          tweet.probability = response.body.probability;
+          console.log(tweet.probability);
+//          console.log(dateStamp + ' : ' + tweet.user.screen_name + ' : ' + tweet.sentiment + ' : ' + tweet.text)
+          var mongoDoc = {"timestamp":dateStamp,"user":tweet.user.screen_name,"sentiment":tweet.sentiment,"probability":tweet.probability,"text":tweet.text};
+          collection.insert(mongoDoc,function(err, result){
+            console.log(err + ' : ' + result);
+          });
+          console.log(tweet.user.screen_name +' : '+tweet.text);
+          count++;
+          updateCount(countFile,count);
+      });
 })
+
+
+
+//file editing for rate limitier
+
+
+function updateCount(savPath, data) {
+      fs.writeFile (savPath, data, function(err) {
+          if (err) throw err;
+          console.log('count update complete');
+      });
 }
 
+
+
+
+
+//web server frontend
 
 app.use("/js", express.static(__dirname + '/js'));
 app.use("/css", express.static(__dirname + '/css'));
@@ -81,13 +112,5 @@ app.get('/', function(req, res) {
 });
 
 app.get('/getTweets', function(req, res) {
-	T.get('search/tweets', { q: search, count: 250, location : uk }, function(err, reply) {
-		var tweets = reply.statuses;
-		res.json(tweets);
-	});
+//stream twwets back to web frontend
 });
-
-server.listen(3000);
-
-
-

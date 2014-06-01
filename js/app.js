@@ -16,7 +16,7 @@ $(document).ready(function(){
 					var bodyHeight = $('body').height();
 
 					$('body')
-					.append('<div class="twall-user"></div>')
+					.append('<div class="twall-user sentiment-' + tweet.sentiment + '"></div>')
 					.find('div:last')
 					.append('<div class="picture"><img src="'+ tweet.user.profile_image_url +'"/></div><div class="text">' + tweet.text +'</div>')
 					.hide();
@@ -49,4 +49,3 @@ $(document).ready(function(){
 		}
 	});
 });
-
