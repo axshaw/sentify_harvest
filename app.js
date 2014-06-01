@@ -71,11 +71,11 @@ stream.on('tweet', function (tweet) {
           dateStamp = Math.round(+new Date()/1000); //seconds since epoch
           tweet.sentiment = response.body.label;
           tweet.probability = response.body.probability;
-          console.log(tweet.probability);
+        //  console.log(tweet.probability);
 //          console.log(dateStamp + ' : ' + tweet.user.screen_name + ' : ' + tweet.sentiment + ' : ' + tweet.text)
           var mongoDoc = {"timestamp":dateStamp,"user":tweet.user.screen_name,"sentiment":tweet.sentiment,"probability":tweet.probability,"text":tweet.text};
           collection.insert(mongoDoc,function(err, result){
-            console.log(err + ' : ' + result);
+            if(err) console.log(err);
           });
           console.log(tweet.user.screen_name +' : '+tweet.text);
           count++;
