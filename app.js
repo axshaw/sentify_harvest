@@ -69,8 +69,14 @@ stream.on('tweet', function (tweet) {
         })
         .end(function (response) {
           dateStamp = Math.round(+new Date()/1000); //seconds since epoch
-          tweet.sentiment = response.body.label;
-          tweet.probability = response.body.probability;
+          if(response.body.label){
+            tweet.sentiment = response.body.label;
+            tweet.probability = response.body.probability;
+          }else {
+              tweet.sentiment = "";
+              tweet.probability = "";
+          }
+
         //  console.log(tweet.probability);
 //          console.log(dateStamp + ' : ' + tweet.user.screen_name + ' : ' + tweet.sentiment + ' : ' + tweet.text)
           var mongoDoc = {"timestamp":dateStamp,"user":tweet.user.screen_name,"sentiment":tweet.sentiment,"probability":tweet.probability,"text":tweet.text};
