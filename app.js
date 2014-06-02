@@ -76,7 +76,7 @@ stream.on('tweet', function (tweet) {
             collection.insert(mongoDoc,function(err, result){
               if(err) console.log(err);
             });
-            console.log(tweet.user.screen_name +' : '+tweet.text);
+            console.log(tweet.probability +' : '+tweet.text);
             count++;
             updateCount(countFile,count);
           }else {
