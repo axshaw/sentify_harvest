@@ -69,7 +69,7 @@ stream.on('tweet', function (tweet) {
         })
         .end(function (response) {
           dateStamp = Math.round(+new Date()/1000); //seconds since epoch
-          if(response){
+          if(response.body){
             tweet.sentiment = response.body.label;
             tweet.probability = response.body.probability;
           }else {
