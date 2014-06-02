@@ -72,20 +72,21 @@ stream.on('tweet', function (tweet) {
           if(response.body){
             tweet.sentiment = response.body.label;
             tweet.probability = response.body.probability;
+            var mongoDoc = {"timestamp":dateStamp,"user":tweet.user.screen_name,"sentiment":tweet.sentiment,"probability":tweet.probability,"text":tweet.text};
+            collection.insert(mongoDoc,function(err, result){
+              if(err) console.log(err);
+            });
+            console.log(tweet.user.screen_name +' : '+tweet.text);
+            count++;
+            updateCount(countFile,count);
           }else {
-              tweet.sentiment = "";
-              tweet.probability = "";
+              //if response from api is buggered do nothing
+            console.log("no idea not storing this");
           }
 
         //  console.log(tweet.probability);
 //          console.log(dateStamp + ' : ' + tweet.user.screen_name + ' : ' + tweet.sentiment + ' : ' + tweet.text)
-          var mongoDoc = {"timestamp":dateStamp,"user":tweet.user.screen_name,"sentiment":tweet.sentiment,"probability":tweet.probability,"text":tweet.text};
-          collection.insert(mongoDoc,function(err, result){
-            if(err) console.log(err);
-          });
-          console.log(tweet.user.screen_name +' : '+tweet.text);
-          count++;
-          updateCount(countFile,count);
+
       });
 })
 
