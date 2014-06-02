@@ -18,7 +18,7 @@ var MongoClient = require('mongodb').MongoClient;
 var collection;
 
 // Connect to the db
-MongoClient.connect("mongodb://api.sentify.io:27017/sentify", function(err, db) {
+MongoClient.connect("mongodb://localhost:27017/sentify", function(err, db) {
   if(!err) {
     console.log("mongodb connected");
     collection = db.collection('tweets');
@@ -72,7 +72,12 @@ stream.on('tweet', function (tweet) {
           if(response.body){
             tweet.sentiment = response.body.label;
             tweet.probability = response.body.probability;
-            var mongoDoc = {"timestamp":dateStamp,"user":tweet.user.screen_name,"sentiment":tweet.sentiment,"probability":tweet.probability,"text":tweet.text};
+
+
+            // geo: { type: 'Point', coordinates: [ 52.008462, -0.063169 ] },
+            //console.log(tweet);
+            var mongoDoc = {"timestamp":dateStamp,"user":tweet.user.screen_name,"sentiment":tweet.sentiment,"probability":tweet.probability,"text":tweet.text,"geo":tweet.geo};
+            console.log(mongoDoc);
             collection.insert(mongoDoc,function(err, result){
               if(err) console.log(err);
             });
