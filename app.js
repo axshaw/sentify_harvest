@@ -72,12 +72,9 @@ stream.on('tweet', function (tweet) {
           if(response.body){
             tweet.sentiment = response.body.label;
             tweet.probability = response.body.probability;
-
-
-            // geo: { type: 'Point', coordinates: [ 52.008462, -0.063169 ] },
             //console.log(tweet);
             var mongoDoc = {"timestamp":dateStamp,"user":tweet.user.screen_name,"sentiment":tweet.sentiment,"probability":tweet.probability,"text":tweet.text,"geo":tweet.geo};
-            console.log(mongoDoc);
+            //console.log(mongoDoc);
             collection.insert(mongoDoc,function(err, result){
               if(err) console.log(err);
             });
